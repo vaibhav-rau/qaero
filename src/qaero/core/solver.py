@@ -295,4 +295,97 @@ class HybridOptimizerSolver(Solver):
                         'total_cost': total_cost
                     })
                 
-                return total
+                return total_cost
+            
+            # Initial guess
+            x0 = self._get_initial_guess(problem)
+            
+            # Hybrid optimization
+            result = minimize(
+                hybrid_objective,
+                x0,
+                method=self.config.classical_optimizer,
+                bounds=list(problem.bounds.values()) if problem.bounds else None,
+                options={'maxiter': self.config.max_iterations}
+            )
+            
+            optimal_vars = {
+                var: result.x[i] for i, var in enumerate(problem.variables)
+            }
+            
+            return OptimizationResult(
+                problem_id=problem.problem_id,
+                backend_name=f"hybrid_{self.backend.name}",
+                success=result.success,
+                execution_time=time.time() - start_time,
+                optimal_value=result.fun,
+                optimal_variables=optimal_vars,
+                solution_history=solution_history,
+                metadata={
+                    'algorithm': 'HybridQuantumClassical',
+                    'classical_optimizer': self.config.classical_optimizer,
+                    'quantum_steps': self.config.quantum_steps,
+                    'parameter_history': parameter_history,
+                    'n_function_evaluations': result.nfev,
+                    'n_iterations': result.nit,
+                    'hybrid_components': ['classical_objective', 'quantum_enhancement']
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"Hybrid optimization failed: {e}")
+            return OptimizationResult(
+                problem_id=problem.problem_id,
+                backend_name="hybrid",
+                success=False,
+                execution_time=time.time() - start_time,
+                error_message=str(e)
+            )
+    
+    def _quantum_enhancement(self, parameters: np.ndarray, classical_value: float) -> float:
+        """Apply quantum enhancement to classical optimization."""
+        # This is where quantum processing would happen
+        # For now, implement a simple quantum-inspired enhancement
+        
+        # Quantum tunneling simulation
+        if len(self.parameter_server['parameter_history']) > 1:
+            prev_params = self.parameter_server['parameter_history'][-2]
+            param_change = np.linalg.norm(parameters - prev_params)
+            
+            # Simulate quantum tunneling effect
+            tunneling_effect = 0.01 * np.exp(-param_change)
+        else:
+            tunneling_effect = 0.0
+        
+        # Quantum fluctuation
+        fluctuation = 0.001 * np.random.randn()
+        
+        return tunneling_effect + fluctuation
+    
+    def _get_initial_guess(self, problem: OptimizationProblem) -> np.ndarray:
+        """Generate initial guess for optimization."""
+        n_vars = len(problem.variables)
+        x0 = np.zeros(n_vars)
+        
+        if problem.bounds:
+            for i, var in enumerate(problem.variables):
+                if var in problem.bounds:
+                    low, high = problem.bounds[var]
+                    x0[i] = (low + high) / 2
+                else:
+                    x0[i] = 0.0
+        else:
+            x0 = np.random.randn(n_vars) * 0.1
+        
+        return x0
+
+
+# Factory function for creating solvers
+def create_solver(solver_type: str = "auto", **config) -> Solver:
+    """Factory function to create solvers."""
+    if solver_type == "hybrid":
+        return HybridOptimizerSolver(config)
+    elif solver_type == "auto":
+        return Solver(config)
+    else:
+        raise ValueError(f"Unknown solver type: {solver_type}")

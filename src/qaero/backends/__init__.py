@@ -1,15 +1,8 @@
 """
 Backend plugins for quantum and classical computation.
 """
-from .base import Backend
+from .base import Backend, BackendRegistry, register_backend
 from .classical import ClassicalBackend, SimulatedAnnealingBackend
-from .quantum import QuantumBackend, DWaveBackend, QiskitBackend
+from .quantum import QuantumBackend, DWaveBackend, QiskitBackend, PennyLaneBackend
 
-__all__ = [
-    'Backend',
-    'ClassicalBackend', 
-    'SimulatedAnnealingBackend',
-    'QuantumBackend',
-    'DWaveBackend',
-    'QiskitBackend'
-]
+# Register all back

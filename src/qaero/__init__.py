@@ -15,6 +15,9 @@ __email__ = "dev@qaero.tech"
 from .core.base import Problem, OptimizationProblem, PDEProblem, QaeroError
 from .core.results import OptimizationResult, PDEResult, ResultValidator
 from .core.registry import AlgorithmRegistry, BackendRegistry
+from .core.solver import Solver, HybridOptimizerSolver, create_solver, SolverConfig
+from .core.backend_interface import BackendInterface, QuantumBackendInterface, ClassicalBackendInterface
+from .core.metrics import PerformanceMetrics, QualityMetrics, BenchmarkResult, BenchmarkSuite, global_benchmark_suite
 
 # Backend imports
 from .backends.base import Backend, BackendRegistry
@@ -44,6 +47,23 @@ from .algorithms.pde import (
     QuantumPDESolver,
     HHLLinearSolver,
     VQLSSolver
+)
+
+# Persona imports
+from .personas import AerospaceEngineer, QuantumResearcher, create_persona, UserPreferences
+
+# CLI imports
+from .cli import main as cli_main
+
+# Jupyter imports
+from .jupyter import (
+    QAeroDashboard,
+    CircuitVisualizer,
+    OptimizationTraceViewer,
+    ParetoFrontViewer,
+    show_dashboard,
+    quick_solve,
+    compare_backends
 )
 
 # High-level API
@@ -113,6 +133,25 @@ __all__ = [
     # Problem templates
     'AirfoilOptimizationProblem', 'WingDesignProblem', 'CompressibleFlowProblem',
     'AscentTrajectoryProblem', 'SatelliteManeuverProblem', 'OrbitalTransferProblem',
+    
+    # Solver
+    'Solver', 'HybridOptimizerSolver', 'create_solver', 'SolverConfig',
+    
+    # Backend Interface
+    'BackendInterface', 'QuantumBackendInterface', 'ClassicalBackendInterface',
+    
+    # Metrics and Benchmarking
+    'PerformanceMetrics', 'QualityMetrics', 'BenchmarkResult', 'BenchmarkSuite', 'global_benchmark_suite',
+    
+    # Personas
+    'AerospaceEngineer', 'QuantumResearcher', 'create_persona', 'UserPreferences',
+    
+    # CLI
+    'cli_main',
+    
+    # Jupyter
+    'QAeroDashboard', 'CircuitVisualizer', 'OptimizationTraceViewer', 'ParetoFrontViewer',
+    'show_dashboard', 'quick_solve', 'compare_backends',
     
     # Exceptions
     'QaeroError'

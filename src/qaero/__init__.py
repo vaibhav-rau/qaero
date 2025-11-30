@@ -1,13 +1,50 @@
 """
 QAero: Quantum Aerospace Optimization & Simulation Toolkit
 """
-__version__ = "0.1.0"
-__author__ = "QAero Development Team"
+from importlib.metadata import version, PackageNotFoundError
 
+try:
+    __version__ = version("qaero")
+except PackageNotFoundError:
+    __version__ = "0.1.0-dev"
+
+__author__ = "QAero Development Team"
+__email__ = "dev@qaero.tech"
+
+# Core imports
 from .core.base import Problem, OptimizationProblem, PDEProblem, QaeroError
-from .core.results import OptimizationResult, PDEResult
-from .backends import registry, Backend
-from .problems import AirfoilOptimizationProblem, WingDesignProblem, AscentTrajectoryProblem
+from .core.results import OptimizationResult, PDEResult, ResultValidator
+from .core.registry import AlgorithmRegistry, BackendRegistry
+
+# Backend imports
+from .backends.base import Backend, BackendRegistry
+from .backends.classical import ClassicalBackend, SimulatedAnnealingBackend
+from .backends.quantum import QuantumBackend, DWaveBackend, QiskitBackend
+
+# Problem template imports
+from .problems.aerodynamics import (
+    AirfoilOptimizationProblem,
+    WingDesignProblem,
+    CompressibleFlowProblem
+)
+from .problems.trajectory import (
+    AscentTrajectoryProblem,
+    SatelliteManeuverProblem,
+    OrbitalTransferProblem
+)
+
+# Algorithm imports
+from .algorithms.optimization import (
+    QuantumOptimizer,
+    QAOAOptimizer,
+    VQEOptimizer,
+    AnnealingOptimizer
+)
+from .algorithms.pde import (
+    QuantumPDESolver,
+    HHLLinearSolver,
+    VQLSSolver
+)
 
 # High-level API
 def solve_problem(problem: Problem, backend: str = "classical_scipy", **backend_config):
@@ -21,8 +58,19 @@ def solve_problem(problem: Problem, backend: str = "classical_scipy", **backend_
     
     Returns:
         OptimizationResult or PDEResult
+        
+    Raises:
+        QaeroError: If problem solution fails
+        
+    Example:
+        >>> problem = AirfoilOptimizationProblem()
+        >>> result = solve_problem(problem, backend="simulated_annealing")
+        >>> print(f"Optimal value: {result.optimal_value}")
     """
-    backend_instance = registry.create_backend(backend, **backend_config)
+    backend_instance = BackendRegistry.create_backend(backend, **backend_config)
+    
+    if not backend_instance.validate_problem(problem):
+        raise QaeroError(f"Backend {backend} cannot solve problem {problem.problem_id}")
     
     if isinstance(problem, OptimizationProblem):
         return backend_instance.solve_optimization(problem)
@@ -31,25 +79,40 @@ def solve_problem(problem: Problem, backend: str = "classical_scipy", **backend_
     else:
         raise QaeroError(f"Unsupported problem type: {type(problem)}")
 
-def list_available_backends():
+def list_available_backends() -> list[str]:
     """List all registered computational backends."""
-    return registry.list_backends()
+    return BackendRegistry.list_backends()
+
+def list_available_algorithms() -> dict:
+    """List all registered algorithms by category."""
+    return AlgorithmRegistry.list_algorithms()
+
+# Package-level backend registry
+_backend_registry = BackendRegistry()
+_algorithm_registry = AlgorithmRegistry()
 
 __all__ = [
     # Core
-    'solve_problem', 'list_available_backends',
+    'solve_problem', 'list_available_backends', 'list_available_algorithms',
     
     # Problems
     'Problem', 'OptimizationProblem', 'PDEProblem',
     
     # Results
-    'OptimizationResult', 'PDEResult',
+    'OptimizationResult', 'PDEResult', 'ResultValidator',
     
     # Backends
-    'Backend', 'registry',
+    'Backend', 'BackendRegistry',
+    'ClassicalBackend', 'SimulatedAnnealingBackend',
+    'QuantumBackend', 'DWaveBackend', 'QiskitBackend',
+    
+    # Algorithms
+    'QuantumOptimizer', 'QAOAOptimizer', 'VQEOptimizer', 'AnnealingOptimizer',
+    'QuantumPDESolver', 'HHLLinearSolver', 'VQLSSolver',
     
     # Problem templates
-    'AirfoilOptimizationProblem', 'WingDesignProblem', 'AscentTrajectoryProblem',
+    'AirfoilOptimizationProblem', 'WingDesignProblem', 'CompressibleFlowProblem',
+    'AscentTrajectoryProblem', 'SatelliteManeuverProblem', 'OrbitalTransferProblem',
     
     # Exceptions
     'QaeroError'
